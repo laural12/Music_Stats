@@ -85,29 +85,105 @@ def plot_top_songs(num_top_songs=10, exclude_artist_list=None):
     return top_songs
 
 
-def plot_monthly_listen_count():
+# def plot_monthly_listen_count(artist_name):
+#     # Filter data for the specified artist's songs
+#     artist_songs = [
+#         entry
+#         for entry in data
+#         if artist_name.lower() in entry["master_metadata_album_artist_name"].lower()
+#     ]
+
+#     # Group data by month
+#     monthly_listen_count = defaultdict(int)
+
+#     for entry in artist_songs:
+#         timestamp_str = entry["ts"]
+#         timestamp = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%SZ")
+#         month_year = timestamp.strftime("%Y-%m")
+#         monthly_listen_count[month_year] += 1
+
+#     # Extract months and listen counts
+#     months = list(monthly_listen_count.keys())
+#     listen_counts = list(monthly_listen_count.values())
+
+#     plt.figure(figsize=(12, 8))
+#     bars = plt.bar(months, listen_counts, color="lightblue")
+#     plt.xlabel("Month")
+#     plt.ylabel("Listen Counts")
+#     plt.title(f"Monthly Listen Count of {artist_name} Songs")
+#     plt.xticks(rotation=45, ha="right")
+
+#     # Annotate each bar with the listen count
+#     for i, bar in enumerate(bars):
+#         height = bar.get_height()
+#         plt.text(
+#             bar.get_x() + bar.get_width() / 2,
+#             height + 5,
+#             f"{height}",
+#             ha="center",
+#             va="bottom",
+#             color="black",
+#         )
+
+#     plt.tight_layout()
+
+#     # Save the plot to a file
+#     plt.savefig("static/monthly_listen_count_plot.png")
+#     plt.close()
+
+#     # Return the monthly listen count data for rendering in the template
+#     return monthly_listen_count
+
+
+def plot_monthly_listen_count(artist_name):
+    # Filter data for the specified artist's songs
+    artist_songs = [
+        entry
+        for entry in data
+        if entry.get("master_metadata_album_artist_name")
+        and artist_name.lower() in entry["master_metadata_album_artist_name"].lower()
+    ]
+
+    # Group data by month
     monthly_listen_count = defaultdict(int)
 
-    for entry in data:
+    for entry in artist_songs:
         timestamp_str = entry["ts"]
         timestamp = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%SZ")
         month_year = timestamp.strftime("%Y-%m")
         monthly_listen_count[month_year] += 1
 
+    # Extract months and listen counts
     months = list(monthly_listen_count.keys())
     listen_counts = list(monthly_listen_count.values())
 
     plt.figure(figsize=(12, 8))
-    plt.bar(months, listen_counts, color="lightblue")
+    bars = plt.bar(months, listen_counts, color="lightblue")
     plt.xlabel("Month")
-    plt.ylabel("Song Counts")
-    plt.title("Number of Songs Listened to Each Month")
+    plt.ylabel("Listen Counts")
+    plt.title(f"Monthly Listen Count of {artist_name} Songs")
     plt.xticks(rotation=45, ha="right")
+
+    # Annotate each bar with the listen count
+    for i, bar in enumerate(bars):
+        height = bar.get_height()
+        plt.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + 5,
+            f"{height}",
+            ha="center",
+            va="bottom",
+            color="black",
+        )
+
     plt.tight_layout()
 
     # Save the plot to a file
     plt.savefig("static/monthly_listen_count_plot.png")
     plt.close()
+
+    # Return the monthly listen count data for rendering in the template
+    return months, listen_counts
 
 
 # Route to the home page
@@ -159,10 +235,23 @@ def top_songs():
 #         return f"Error: {e}"
 
 
-# Route to the monthly listen count page
-@app.route("/monthly_listen_count")
+# Add a new route for the monthly listen count
+@app.route("/monthly_listen_count", methods=["GET", "POST"])
 def monthly_listen_count():
-    plot_monthly_listen_count()
+    if request.method == "POST":
+        artist_name = request.form.get("artist_name")
+        if not artist_name:
+            return "Please provide an artist name."
+
+        try:
+            monthly_listen_count_data = plot_monthly_listen_count(artist_name)
+            return render_template(
+                "monthly_listen_count.html",
+                monthly_listen_count=monthly_listen_count_data,
+            )
+        except ValueError as e:
+            return f"Error: {e}"
+
     return render_template("monthly_listen_count.html")
 
 

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Listen Count</title>
+</head>
+
+<body>
+    <h1>Monthly Listen Count</h1>
+    <img src="{{ url_for('static', filename='monthly_listen_count_plot.png') }}" alt="Monthly Listen Count Plot">
+
+    <form action="{{ url_for('monthly_listen_count') }}" method="get">
+        <button type="submit">Refresh</button>
+    </form>
+
+    <form action="{{ url_for('monthly_listen_count') }}" method="post">
+        <label for="artist_name">Enter Artist Name:</label>
+        <input type="text" id="artist_name" name="artist_name" required>
+        <button type="submit">Generate Monthly Listen Count</button>
+    </form>
+
+    <p>Here is the monthly listen count:</p>
+    <ul>
+        {% for month, listen_count in zip(monthly_listen_count[0], monthly_listen_count[1]) %}
+        <li>{{ month }} - {{ listen_count }} listens</li>
+        {% endfor %}
+    </ul>
+    <p><a href="{{ url_for('home') }}">Back to Home</a></p>
+</body>
+
+</html>
